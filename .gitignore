@@ -1,3 +1,6 @@
 _site/
 *.sublime*
 scripts/
+selenium/
+node_modules/
+build/

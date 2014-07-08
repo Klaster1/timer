@@ -4,12 +4,14 @@ define([
 	"angularuirouter",
 	"angularbs",
 	"app/paginator",
-	"app/util"
+	"app/util",
+	"app/hotkeys"
 ], function () {
 	angular
 	.module("timer", [
 		"timer.util",
 		"timer.paginator",
+		"timer.hotkeys",
 		"ui",
 		"ui.router",
 		"ui.bootstrap"
@@ -44,6 +46,14 @@ define([
 		$rootScope.Games = Games;
 		$rootScope.Game = Game;
 		$rootScope.$watch(Games.watcher, Games.watcherCallback);
+		
+		["all"].concat(Game.states).forEach(function (state) {
+			$rootScope.$on("go.games."+state, function () {
+				$rootScope.$apply(function () {
+					$state.go("games.state", {state: state, offset: 0, limit: Games.lastParams.limit});
+				});
+			});
+		});
 	})
 	.factory("Games", function (Game, Util, $state) {
 		var data = JSON.parse(localStorage.getItem("gamesLog")) || [];
@@ -105,6 +115,13 @@ define([
 				value: function () {
 					this.sessions[this.sessions.length-1].stop = Date.now();
 				}
+			},
+			removeSession: {
+				value: function (session) {
+					var i = this.sessions.indexOf(session);
+					if (i === -1) return;
+					this.sessions.splice(i, 1);
+				} 
 			}
 		};
 		return {
@@ -178,7 +195,7 @@ define([
 			return game.sessions[game.sessions.length - 1].stop === 0;
 		};
 	})
-	.controller("Game", function ($scope, $stateParams, $state, $timeout, Games, Game, Paginator) {
+	.controller("Game", function ($scope, $stateParams, $state, $timeout, $filter, Games, Game, Paginator) {
 		var leavePage = function (isRemoved) {
 			if (isRemoved) $state.transitionTo("games.state", Games.lastParams);
 		};
@@ -187,6 +204,40 @@ define([
 		if (!game) leavePage(true);
 		$scope.game = Game.init(game);
 		$scope.$watch("game.isRemoved", leavePage);
+
+		$scope.toggleGame = function (game) {
+			$filter("isPlaying")(game) ? game.stop() : game.start();
+		};
+
+		$scope.$on("game.toggle", function () {
+			$scope.$apply(function () {
+				$scope.toggleGame($scope.game);
+			});
+		});
+
+		$scope.$on("delete.game", function () {
+			$scope.$apply(function () {
+				Games.remove($scope.game);
+			});
+		});
+
+		$scope.$on("delete.session", function () {
+			$scope.$apply(function () {
+				game.removeSession($scope.focused.session);
+			});
+		});
+
+		Game.states.forEach(function (state) {
+			$scope.$on("game.mark."+state, function () {
+				$scope.$apply(function () {
+					$scope.game.state = state;
+				});
+			});
+		});
+
+		$scope.focused = {
+			session: null
+		};
 
 		$scope.timeNow = Date.now();
 		(function updateNow () {
@@ -217,6 +268,13 @@ define([
 		$scope.setNewTitle = function (value) {
 			$scope.newTitle = value;
 		};
+
+		$scope.$on("rename", function () {
+			$scope.$apply(function () {
+				$scope.toggleEditing();
+				$scope.setNewTitle($scope.game.title);
+			});
+		});
 	});
 
 	angular.bootstrap(document, ["timer"]);

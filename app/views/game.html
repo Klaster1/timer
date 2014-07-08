@@ -64,7 +64,7 @@
 			'btn-warning active': (game|isPlaying),
 			'btn-primary': !(game|isPlaying)
 		}"
-		ng-click="(game|isPlaying) ? game.stop() : game.start()"
+		ng-click="toggleGame(game)"
 	>
 		<i
 			class="glyphicon"
@@ -90,9 +90,16 @@
 
 
 <table class="table table-hover table-condensed">
-	<tr ng-repeat="session in (game.sessions|orderBy:'-start')">
+	<tbody tab-items>
+	<tr
+		ng-repeat="session in (game.sessions|orderBy:'-start')"
+		tabindex="{{$index+1}}"
+		ng-focus="focused.session = session"
+		ng-blur="focused.session = undefined"
+	>
 		<td>{{ session.start|date:"MMM d, y HH:mm" }}</td>
 		<td>{{ (session.stop?session.stop:undefined)|date:"MMM d, y HH:mm" }}</td>
 		<td>{{ ((session.stop||timeNow)-session.start)|duration }}</td>
 	</tr>
+	</tbody>
 </table>

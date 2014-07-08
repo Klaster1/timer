@@ -33,10 +33,11 @@ State: {{$state|json}}
 	</li>
 </nav>
 
-<nav class="list-group">
+<nav class="list-group" tab-items>
 	<a
 		ui-sref="game({gameID:game.id})"
 		class="list-group-item"
+		tabindex="{{$index+1}}"
 		ng-repeat="game in (Games.data|state:$state.params.state|orderBy:'-(sessions|last).start'|page:$state.params.limit:$state.params.offset)"
 	>
 		<i

@@ -34,6 +34,9 @@ define(["angular"], function () {
 				.map(function (value, index) {
 					return index + (offset || 0);
 				});
+			},
+			raf: function (fn) {
+				return (window.requestAnimationFrame||window.setTimeout)(fn);
 			}
 		};
 	})	
